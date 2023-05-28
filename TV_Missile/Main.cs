@@ -18,7 +18,6 @@ namespace TV_Missile
             HarmonyInstance harmonyInstance = HarmonyInstance.Create("YourName.YourMod");
             harmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
 
-
             VTOLAPI.SceneLoaded += SceneLoaded;
             base.ModLoaded();
 
