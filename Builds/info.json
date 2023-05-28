@@ -1,0 +1,19 @@
+{
+  "name": "TV_Missile",
+  "description": "Missile",
+  "dll_file": "TV_Missile.dll",
+  "last_edit": 638208037704550362,
+  "pub_id": "",
+  "json_version": "",
+  "version": "",
+  "tagline": "",
+  "repository": "",
+  "is_public": false,
+  "unlisted": false,
+  "preview_image": "",
+  "web_preview_image": "",
+  "dependencies": null,
+  "mod_dependencies": null,
+  "menu_mod": false,
+  "ContentType": 3
+}
