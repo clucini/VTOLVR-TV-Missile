@@ -7,16 +7,22 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Harmony;
+using TV_Missile.TVMissile;
 
 namespace TV_Missile
 {
     public class Main : VTOLMOD
     {
+        public static GameObject MFDGameObject;
         // This method is run once, when the Mod Loader is done initialising this game object
         public override void ModLoaded()
         {
-            HarmonyInstance harmonyInstance = HarmonyInstance.Create("YourName.YourMod");
+            HarmonyInstance harmonyInstance = HarmonyInstance.Create("clucini.TVMissile");
             harmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
+
+
+            Debug.Log("Loading MFD Object");
+            MFDGameObject = FileLoader.LoadMFDGameobject($"{ModFolder}/tvmfd.mfd");
 
             VTOLAPI.SceneLoaded += SceneLoaded;
             base.ModLoaded();

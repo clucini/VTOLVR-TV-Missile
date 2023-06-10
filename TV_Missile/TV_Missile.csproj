@@ -55,6 +55,9 @@
     <Reference Include="UnityEngine">
       <HintPath>..\Dependencies\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>..\Dependencies\UnityEngine.AssetBundleModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.AudioModule">
       <HintPath>..\Dependencies\UnityEngine.AudioModule.dll</HintPath>
     </Reference>
@@ -71,6 +74,8 @@
   <ItemGroup>
     <Compile Include="Main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TVMissile\FileLoader.cs" />
+    <Compile Include="TVMissile\MFDManagerPatch.cs" />
     <Compile Include="TVMissile\TVMFD.cs" />
     <Compile Include="TVMissile\TVMissile.cs" />
   </ItemGroup>
