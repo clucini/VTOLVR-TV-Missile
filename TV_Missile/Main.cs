@@ -8,12 +8,14 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Harmony;
 using TV_Missile.TVMissile;
+using UnityEngine.UI;
 
 namespace TV_Missile
 {
     public class Main : VTOLMOD
     {
         public static GameObject MFDGameObject;
+
         // This method is run once, when the Mod Loader is done initialising this game object
         public override void ModLoaded()
         {
@@ -21,9 +23,18 @@ namespace TV_Missile
             harmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
 
 
-            Debug.Log("Loading MFD Object");
+            Debug.Log($"Loading MFD Object from {ModFolder}");
             MFDGameObject = FileLoader.LoadMFDGameobject($"{ModFolder}/tvmfd.mfd");
 
+            TVMFDPage page = MFDGameObject.AddComponent<TVMFDPage>();
+            MFDPage mfdPage = MFDGameObject.GetComponent<MFDPage>();
+
+            int children = MFDGameObject.transform.childCount;
+
+
+            page.targetRT = MFDGameObject.transform.Find("TV_MFD_RT").gameObject;
+            mfdPage.OnActivatePage.AddListener(() => { page.OpenPage(); });
+            
             VTOLAPI.SceneLoaded += SceneLoaded;
             base.ModLoaded();
 

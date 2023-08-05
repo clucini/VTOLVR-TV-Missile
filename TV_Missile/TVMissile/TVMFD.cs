@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using OC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,8 +27,6 @@ public class TVMFDPage : MonoBehaviour, IQSVehicleComponent, IPersistentVehicleD
     public HelmetController helmet;
 
     public GameObject targetRT;
-
-    public Camera TVCamera;
 
     public Actor actor;
 
@@ -125,7 +124,7 @@ public class TVMFDPage : MonoBehaviour, IQSVehicleComponent, IPersistentVehicleD
 
     private string s_tgp_notSOI = "NOT SOI";
 
-    private bool started;
+    private bool started = false;
 
     public Texture irModeSkyTexture;
 
@@ -165,6 +164,12 @@ public class TVMFDPage : MonoBehaviour, IQSVehicleComponent, IPersistentVehicleD
     public float vesselRelMaxPitch = 30f;
 
     private bool limLineVisible = true;
+
+    private List<Camera> TV_Cameras = new List<Camera>();
+    private int activeCamera = 0;
+
+    // TODO: Rename to CurActiveTVCamera or something
+    public Camera TVCamera;
 
     public int fovIdx { get; private set; }
 
@@ -277,38 +282,51 @@ public class TVMFDPage : MonoBehaviour, IQSVehicleComponent, IPersistentVehicleD
         {
             TVCamera.fieldOfView = fovs[fovIdx];
         }
-        SetSensorMode(SensorModes.DAY);
-        tgpMode = TGPModes.FWD;
-        targetRT.SetActive(value: false);
-        headModeDisplayObj.SetActive(value: false);
-        errorObject.SetActive(value: false);
-        rangeObject.SetActive(value: false);
-        Debug.Log("TVMFDPage Awake");
+        //SetSensorMode(SensorModes.DAY);
+        //targetRT.SetActive(value: false);
+        //headModeDisplayObj.SetActive(value: false);
+//        errorObject.SetActive(value: false);
+        //rangeObject.SetActive(value: false);
+        Debug.Log("TVMFD::Awake");
     }
 
-    private void Start()
-    {
-        Setup();
-    }
 
     private void Setup()
     {
         if (started)
         {
+            Debug.Log("TVMFD::Setup: early exit");
             return;
         }
-        started = true;
+        Debug.Log("TVMFD::Setup: doing setup");
+
         if (!wm)
         {
+            Debug.Log("TVMFD::Setup: finding wm");
             wm = GetComponentInParent<WeaponManager>();
+            if(!wm)
+            {
+                Debug.LogError("TVMFD::Setup: Didn't find wm");
+            }
         }
+        if(!targetRT)
+        {
+            Debug.Log("TVMFD::Setup: finding targetRT");
+            targetRT = transform.Find("TV_MFD_RT").gameObject;
+        }
+        if (!TVCamera)
+        {
+            Debug.Log("TVMFD::Setup: finding cameras");
+            FindTVCameras();
+        }
+        var t = transform;
+        transform.localScale = new Vector3( 1, 1, 1);
+        transform.localRotation = Quaternion.identity;
+        transform.localPosition = new Vector3( 0, 0, 0);
+        Debug.Log($"TVMFD::Setup: positioning {t.localPosition}, {t.localRotation}, {t.localScale}");
+        started = true;
         if ((bool)wm.opticalTargeter)
         {
-            if (!TVCamera)
-            {
-                // TODO: Convert to missile
-               TVCamera = wm.opticalTargeter.cameraTransform.GetComponent<Camera>();
-            }
             if ((bool)TVCamera)
             {
                 // TODO: Replace
@@ -323,13 +341,57 @@ public class TVMFDPage : MonoBehaviour, IQSVehicleComponent, IPersistentVehicleD
         {
             portalPage.SetText("tgpMode", tgpModeLabels[(int)tgpMode]);
         }
-        UpdateLimLineVisibility();
-        Debug.Log("TargetingMFDPage Setup");
+        //UpdateLimLineVisibility();
+    }
+    void FindTVCameras()
+    {
+        Debug.Log($"TVMFD::FindTVCameras(): wm.equipCount: {wm.equipCount} ");
+        for(int i = 0; i < wm.equipCount; i++)
+        {
+            var wep = wm.GetEquip(i);
+            if((bool)wep)
+            {
+                // TODO: Enforce this is a tv missile
+                Debug.Log($"Checking weapon {i}: {wep.name} for camera. active: {wep.gameObject.activeSelf },  activeInHierarchy {wep.gameObject.activeInHierarchy }");
+
+                Camera camera = wep.GetComponentInChildren<Camera>();
+                if(camera )
+                {
+                    Debug.Log("Found Camera on weapon " + i);
+                    if(wep.name == "fa26_tv161")
+                        TV_Cameras.Add(camera);
+                }
+            }
+        }
+
+        if(TV_Cameras.Count > 0) {
+            Debug.Log("TVMFD::FindTVCameras: Found camera, enabling");
+            TVCamera = TV_Cameras[0];
+            TVCamera.enabled = true;
+            if(!targetRT)
+            {
+                Debug.LogError("TVMFD::FindTVCameras: targetRT not set");
+            }
+            if(!TVCamera.targetTexture)
+            {
+                Debug.LogError("TVMFD::FindTVCameras: TVCamera.targetTexture");
+            }
+
+            targetRT.SetActive(true);
+        } else {
+            Debug.Log("TVMFD::FindTVCameras: no cameras, disabling targetRT");
+            targetRT.SetActive(false);
+        }
     }
 
     private void OnDeactivatePage()
     {
-        errorObject.SetActive(value: false);
+        //errorObject.SetActive(value: false);
+        if((bool)TVCamera)
+        {
+            TVCamera.enabled = false;
+            targetRT.SetActive(false);
+        }
     }
 
     private void OnSetPageState(MFDPortalPage.PageStates s)
@@ -461,20 +523,11 @@ public class TVMFDPage : MonoBehaviour, IQSVehicleComponent, IPersistentVehicleD
 
     private void LateUpdate()
     {
-        // TODO: This feels very redundant
-        if (!TVCamera)
-        {
-            if (powered)
-            {
-                TGPPwrButton();
-            }
-            return;
-        }
         if ((bool)wm.battery && !wm.battery.Drain(0.01f * Time.deltaTime) && powered)
         {
-            TGPPowerOff();
+            //TGPPowerOff();
         }
-        UpdateDisplay();
+        //UpdateDisplay();
         if (tgpMode != TGPModes.HEAD && tsButtonDownTime > 0f)
         {
             tsButtonDownTime += Time.deltaTime;
@@ -577,22 +630,6 @@ public class TVMFDPage : MonoBehaviour, IQSVehicleComponent, IPersistentVehicleD
         powered = false;
     }
 
-    public void TGPPwrButton()
-    {
-        if (!started)
-        {
-            Setup();
-        }
-        if (powered)
-        {
-            TGPPowerOff();
-        }
-        else
-        {
-            TGPPowerOn();
-        }
-        this.OnTGPPwrButton?.Invoke(powered);
-    }
 
     public void RemoteSetPower(bool p)
     {
@@ -608,13 +645,17 @@ public class TVMFDPage : MonoBehaviour, IQSVehicleComponent, IPersistentVehicleD
 
     public void OpenPage()
     {
+        Debug.Log("TVMFD::OpenPage");
         if (!started)
         {
+            Debug.Log("TVMFD::OpenPage: Setup()");
             Setup();
         }
         if ((bool)TVCamera)
         {
+            Debug.Log("TVMFD::OpenPage: Activating Camera");
             TVCamera.enabled = true;
+            targetRT.SetActive(true);
             CurrentCameraEvents.OnCameraPreCull -= OnRenderCamera;
             CurrentCameraEvents.OnCameraPreCull += OnRenderCamera;
         }

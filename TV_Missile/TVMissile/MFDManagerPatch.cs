@@ -9,6 +9,17 @@ class PatchSetupDict
 	public static void Prefix(MFDManager __instance)
 	{
         MFDPage[] componentsInChildren = __instance.GetComponentsInChildren<MFDPage>(includeInactive: true);
+        // TODO: Kinda dumb 
+        foreach (MFDPage Page in componentsInChildren)
+        {
+            if(Page.pageName == "TV")
+            {
+                Page.GetComponent<TVMFDPage>().OpenPage();
+                Debug.LogWarning("MFD already has tv");
+                return;
+            }
+        }
+
         bool foundHome = false;
         foreach (MFDPage Page in componentsInChildren)
         {
@@ -18,17 +29,11 @@ class PatchSetupDict
                 Object.Instantiate(Main.MFDGameObject, __instance.transform);
 
                 Debug.LogWarning("Found home, adding button");
-                //Debug.LogWarning($"Page has {Page.mod}");
-
-
-                //Page.buttons.Add(info);
                 break;
             }
         }
 
         int children = __instance.transform.childCount;
-		Debug.LogError("Testing Prefix");
-
 
         Debug.LogError($"Instance : {__instance.transform.name}");
         if(!foundHome)
@@ -48,13 +53,26 @@ class HomePagePatch
             return;
 
         MFDPage.MFDButtonInfo info = new MFDPage.MFDButtonInfo();
-        info.OnPress.AddListener( () => { __instance.OpenPage("tv"); });
+        info.OnPress.AddListener( () => { __instance.OpenPage("TV"); });
         info.label = "TV";
         info.label = "TV Missile";
         info.spOnly = false;
         info.mpOnly = false;
         info.button = MFD.MFDButtons.T2;
         __instance.SetPageButton(info);
-        Debug.LogError("Inting home");
+        Debug.Log("Inting home");
+    }
+}
+
+// Function called at the end of setpage
+[HarmonyPatch(typeof(MFD), "UpdateInputDisplayObject")]
+class SetPagePatch
+{
+    [HarmonyPostfix]
+    public static void PostFix(MFD __instance)
+    {
+        if(__instance.activePage.name == "TV")
+        {
+        }
     }
 }
